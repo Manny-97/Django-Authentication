@@ -3,7 +3,7 @@ from django.shortcuts import render
 from rest_framework import views, exceptions, permissions, response
 
 from . import serializer as user_serializer
-from . import service
+from . import service, authentication
 class RegisterApi(views.APIView):
     def post(self, request):
         serializer = user_serializer.UserSerializer(data=request.data)
@@ -24,3 +24,21 @@ class LoginApi(views.APIView):
 
         if not user.check_password(raw_password=password):
             raise exceptions.AuthenticationFailed("Invalid Credentials")
+
+        token = service.create_token(user_id=user.id)
+        resp = response.Response()
+        resp.set_cookie(key="jwt", value=token, httponly=True)
+
+        return resp
+
+class UserApi(views.APIView):
+    """
+        Only works for authenticated users
+    """
+    authentication_classes = (authentication.CustomUserAuthentication, )
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        user = request.user
+        serializer = user_serializer.UserSerializer(user)
+        return response.Response(serializer.data)
