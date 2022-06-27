@@ -42,3 +42,13 @@ class UserApi(views.APIView):
         user = request.user
         serializer = user_serializer.UserSerializer(user)
         return response.Response(serializer.data)
+
+class LogoutApi(views.APIView):
+    authentication_classes = (authentication.CustomUserAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        resp = response.Response()
+        resp.delete_cookie("jwt")
+        resp.data = {"message": "Thank you, You have now succesfully logout"}
+        return resp
